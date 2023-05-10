@@ -1,0 +1,9 @@
+{
+    "name": "mohamed/log-viewer",
+
+    "autoload": {
+        "psr-4": {
+            "App\\": "app"
+        }
+    }
+}

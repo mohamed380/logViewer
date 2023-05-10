@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="http://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    <!-- JQery CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" integrity="sha512-pumBsjNRGGqkPzKHndZMaAG+bir374sORyzM3uulLV14lN5LyykqNk8eEeUlUkB3U0M4FApyaHraT65ihJhDpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title>Log viewer</title>
+</head>
+<body>
+<div class="container d-flex justify-content-center flex-column col-5 py-5">
+
+    <h1>Log viewer</h1>
+        <div class="input-group mb-3">
+            <div class="custom-file d-flex justify-content-between">
+            <input type="text" class="col-8 form-control" id="logFileInput">
+            <button class="btn btn-secondary col-3" id="viewData">view</button>
+            </div>
+        </div>
+        <table class="table">
+            <tbody>
+            </tbody>
+    </table>     
+    <div class="d-flex justify-content-between">
+        <button type="button" id="start" class="btn btn-secondary btn-sm col-2 mx-2">&#124; &#60;</button>
+        <button type="button" id="previous" class="btn btn-secondary btn-sm col-2 mx-2">&#60;</button>
+        <button type="button" id="next" class="btn btn-secondary btn-sm col-2 mx-2">&#62;</button>
+        <button type="button" id="last" class="btn btn-secondary btn-sm col-2 mx-2">&#62; &#124; </button>
+    </div>
+    <div class="col-12 bg-secondary mt-3 rounded d-flex justify-content-center">Page: <span id="page"></span></div>
+
+</div>
+
+<script>
+        
+    $(document).ready(function(){
+        var page = 1;
+        var lastPage = false;
+
+       async function getData() {
+            let logFilePath = $('#logFileInput').val();
+            if((new RegExp('^\/([A-z0-9-_+]+\/)*([A-z0-9]+\.log(\.\d*)+)$')).test(logFilePath)){
+                await $.get(`logs?file=${logFilePath}&page=${page}`)
+                .done(function(data){
+                    logs = JSON.parse(data).data.logs;
+                    
+                    if(logs.length == 1 && logs[0] == ''){
+                        logs = [];
+                        lastPage = true;
+                        page--;
+                        return
+                    }else{
+                        page =  JSON.parse(data).data.page;
+                    }
+
+                    $('tbody').empty();
+                    $.each(logs, function(index, log){
+                        $('tbody').append($('<tr>').append($('<th>').attr('scope', 'row').text(index +1)).append($('<td>').text(log)));
+                    });
+                }).fail(function(error){
+                    console.error(error);
+                });
+
+            }else{
+                alert('file path is invalid');
+            }
+            return page 
+        }
+
+        $("#viewData").click(async function (event) {
+           page = 1;
+           lastPage = false; 
+           $('#page').text(await getData());
+        })
+
+        $("#next").click( async function (event) {
+           if(lastPage) return;
+           page++;
+           $('#page').text(await getData());
+        })
+
+        $("#previous").click(async function (event) {
+           if(page == 1) return;
+           page--; 
+           lastPage = false;
+           $('#page').text(await getData());
+        })
+
+        $("#start").click( async function (event) {
+           page = 1;
+           lastPage = false;
+           $('#page').text(await getData());
+        })
+
+        $("#last").click( async function (event) {
+           if(lastPage) return;
+           page = 'last';
+           $('#page').text(await getData());
+           lastPage = true;
+        })
+    });
+</script>
+
+</body>
+</html>
